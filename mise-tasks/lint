@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Check formatting and run LuaLS diagnostics"
+
+set -euo pipefail
+
+stylua --check .
+lua-language-server --check . --logpath /tmp/luals-check

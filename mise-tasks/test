@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Run the Plenary test suite"
+
+set -euo pipefail
+
+nvim --headless --noplugin -u tests/minimal_init.lua -c 'lua require("plenary.test_harness").test_directory_command("tests {minimal_init = \"tests/minimal_init.lua\"}")'
