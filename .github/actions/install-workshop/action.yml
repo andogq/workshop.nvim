@@ -1,0 +1,34 @@
+name: Install Workshop
+
+description: |
+  Installs the Workshop snap and waits for its socket to become available.
+
+inputs:
+  channel:
+    description: Snap channel to install from
+    required: false
+    default: latest/stable
+
+runs:
+  using: composite
+  steps:
+    - name: Install Workshop snap
+      shell: bash
+      run: |
+        sudo snap install workshop --channel=${{ inputs.channel }} --classic
+        sudo snap start workshop.workshopd
+
+    - name: Wait for Workshop socket
+      shell: bash
+      run: |
+        socket="/var/snap/workshop/common/workshop/workshop.socket"
+        for i in {1..30}; do
+          if [ -S "$socket" ]; then
+            echo "Workshop socket ready at $socket"
+            exit 0
+          fi
+          echo "Waiting for Workshop socket... ($i/30)"
+          sleep 1
+        done
+        echo "Timed out waiting for Workshop socket"
+        exit 1

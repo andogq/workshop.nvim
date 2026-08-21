@@ -1,0 +1,7 @@
+describe("workshop.api", function()
+    it("loads without errors", function()
+        local api = require("workshop.api")
+        assert(api ~= nil)
+        assert(type(api.system_info) == "function")
+    end)
+end)
