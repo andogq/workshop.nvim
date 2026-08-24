@@ -1,5 +1,35 @@
 local http = require("workshop.util.http")
 
+---Default locations where workshop socket may be present.
+---@type (string|fun():string?)[]
+local DEFAULT_SOCKET_PATHS = {
+    function()
+        return vim.env["WORKSHOP_SOCKET"]
+    end,
+    function()
+        return vim.env["WORKSHOP"]
+    end,
+    "/var/lib/workshop/workshop.socket",
+    "/var/snap/workshop/common/workshop/workshop.socket",
+}
+
+---Search for the workshop socket in known locations.
+---@return string | nil
+local find_socket_path = function()
+    for _, path in ipairs(DEFAULT_SOCKET_PATHS) do
+        local strpath = nil
+        if type(path) == "function" then
+            strpath = path()
+        else
+            strpath = path
+        end
+
+        if strpath ~= nil and vim.uv.fs_stat(strpath) then
+            return strpath
+        end
+    end
+end
+
 ---@param socket string
 ---@return HttpClient
 local create_http_client = function(socket)
@@ -28,16 +58,19 @@ WorkshopClient.__index = WorkshopClient
 
 ---@class WorkshopClientOpts
 ---
----Path to workshop socket.
----@field socket string
+---Path to workshop socket. If not provided, the file system will be searched.
+---@field socket? string
 
 ---Create a new workshop client, and attempt to connect to a socket.
 ---@param opts WorkshopClientOpts
 ---@return WorkshopClient
-function WorkshopClient:new(opts)
+function WorkshopClient.new(opts)
     local client = setmetatable({}, WorkshopClient)
 
-    client.socket = opts.socket
+    opts.socket = opts.socket or find_socket_path()
+    if opts.socket == nil then
+        error("cannot create client, socket not provided")
+    end
 
     -- Assign fields from the http client
     local http_client = create_http_client(client.socket)

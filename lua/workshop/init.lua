@@ -1,5 +1,4 @@
 local W_project = require("workshop.project")
-local W_socket = require("workshop.socket")
 local WorkshopClient = require("workshop.client")
 local api = require("workshop.api")
 
@@ -8,10 +7,8 @@ local M = {}
 ---@class workshop.Config
 ---
 ---Path to `workshop` socket, or a function that returns the path.
----@field socket string | fun():string
-M.config = {
-    socket = W_socket.find_socket_path,
-}
+---@field socket string?
+M.config = {}
 
 ---@type StartFunction | nil
 M.wrapped_start = nil
@@ -66,19 +63,9 @@ local client = nil
 
 ---Fetch the current client instance.
 M.get_client = function()
-    if client ~= nil then
-        return client
+    if client == nil then
+        client = WorkshopClient.new({ socket = M.config.socket })
     end
-
-    local socket ---@type string
-    local config_socket = M.config.socket
-    if type(config_socket) == "function" then
-        socket = config_socket()
-    else
-        socket = config_socket
-    end
-
-    client = WorkshopClient:new({ socket = socket })
 
     return client
 end
