@@ -1,4 +1,3 @@
----@diagnostic disable: undefined-field
 local http = require("workshop.util.http")
 
 local stub = require("luassert.stub")
@@ -111,7 +110,7 @@ describe("http", function()
             wait = function()
                 return {
                     code = 0,
-                    stdout = "HTTP/1.1 201 Created\r\nContent-Type: application/json\r\nX-Request-Id: abc-123\r\n\r\n{\"ok\":true}",
+                    stdout = 'HTTP/1.1 201 Created\r\nContent-Type: application/json\r\nX-Request-Id: abc-123\r\n\r\n{"ok":true}',
                     stderr = "",
                 }
             end,
@@ -146,7 +145,7 @@ describe("http", function()
             wait = function()
                 return {
                     code = 0,
-                    stdout = "HTTP/1.1 200 OK\r\n\r\n{\"method\":\"GET\"}",
+                    stdout = 'HTTP/1.1 200 OK\r\n\r\n{"method":"GET"}',
                     stderr = "",
                 }
             end,
@@ -169,7 +168,7 @@ describe("http", function()
             wait = function()
                 return {
                     code = 0,
-                    stdout = "HTTP/1.1 200 OK\r\n\r\n{\"method\":\"POST\"}",
+                    stdout = 'HTTP/1.1 200 OK\r\n\r\n{"method":"POST"}',
                     stderr = "",
                 }
             end,

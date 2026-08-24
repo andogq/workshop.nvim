@@ -1,35 +1,5 @@
 local M = {}
 
----@class workshop.api.HttpRequest
----
----URL of request.
----@field url string
----URL query, apended after the URL.
----@field query? table
----The request body.
----@field body? string|table
----The request form.
----@field form? table
----Additional curl arguments.
----@field raw? table
----Request headers.
----@field headers? table<string, string>
-
----@class workshop.api.HttpResponse
----
----Curl process exit code.
----@field exit integer
----HTTP status code.
----@field status integer
----Response headers.
----@field headers table
----Response body.
----@field body string
-
----@class workshop.api.HttpClient
----@field get fun(req: workshop.api.HttpRequest): workshop.api.HttpResponse
----@field post fun(req: workshop.api.HttpRequest): workshop.api.HttpResponse
-
 ---A project as returned by `/v1/projects` — a directory known to the daemon.
 ---@class workshop.api.Project
 ---@field id string
@@ -119,7 +89,7 @@ local M = {}
 ---@field err? string
 ---@field tasks? workshop.api.ChangeTask[]
 
----@param response workshop.api.HttpResponse
+---@param response HttpResponse
 ---@return table
 local process_response = function(response)
     local body = vim.fn.json_decode(response.body)
@@ -129,18 +99,6 @@ local process_response = function(response)
     end
 
     return body.result
-end
-
----@param response workshop.api.HttpResponse
----@return table
-local decode_envelope = function(response)
-    local body = vim.fn.json_decode(response.body)
-
-    if body.type == "error" or response.status < 200 or response.status >= 300 then
-        error("invalid API response")
-    end
-
-    return body
 end
 
 ---@param value string
@@ -154,14 +112,14 @@ local encode_url_part = function(value)
 end
 
 ---Fetch the daemon version.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@return { version: string }
 M.system_info = function(client)
     return process_response(client.get({ url = "/v1/system-info" }))
 end
 
 ---List every project the daemon currently knows about.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@return workshop.api.Project[]
 M.projects = function(client)
     return process_response(client.get({ url = "/v1/projects" }))
@@ -169,7 +127,7 @@ end
 
 ---Look up a single project by its daemon ID. Returns `nil` when no project
 ---with that ID is currently registered.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param project_id string
 ---@return workshop.api.Project|nil
 M.get_project = function(client, project_id)
@@ -184,7 +142,7 @@ end
 
 ---Resolve a directory to a project, registering it with the daemon if it
 ---isn't known yet. This is the entry point for any per-directory query.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param project_path string
 ---@return workshop.api.Project
 M.ensure_project = function(client, project_path)
@@ -196,7 +154,7 @@ end
 
 ---List the workshops of a project: both launched instances (with a live status)
 ---and definition files on disk (which may be `Off`).
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param project_id string
 ---@return workshop.api.WorkshopsResponse
 M.list_workshops = function(client, project_id)
@@ -207,7 +165,7 @@ end
 
 ---Fetch the current state of a single workshop.
 ---`GET /v1/projects/<projectId>/workshops/<name>`
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param project_id string
 ---@param name string
 ---@return workshop.api.WorkshopInfo
@@ -220,7 +178,7 @@ M.get_workshop = function(client, project_id, name)
 end
 
 ---Fetch store/metadata details for a single SDK.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param name string
 ---@return workshop.api.SdkFullInfo
 M.get_sdk_info = function(client, name)
@@ -231,15 +189,15 @@ end
 
 ---Post to an async endpoint and return the id of the change to wait on plus
 ---the (endpoint-specific) result payload.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param url_path string
 ---@param body? table
 ---@return { change: string, result: any }
 M.post_async = function(client, url_path, body)
-    local envelope = decode_envelope(client.post({
+    local envelope = client.post({
         url = url_path,
         body = body,
-    }))
+    }).body
 
     if type(envelope) ~= "table" or type(envelope.change) ~= "string" then
         error("expected an async response with a change id")
@@ -258,7 +216,7 @@ end
 ---When `options.mode` is `"wait-on-error"` the daemon pauses mid-build with
 ---status `"Wait"` instead of failing. In that case the change is returned
 ---as-is so the caller can decide whether to continue, abort, or debug.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param project_id string
 ---@param names string[]
 ---@param action "start"|"launch"|"stop"|"refresh"|"remove"
@@ -299,7 +257,7 @@ end
 ---
 ---Unlike `wait_change`, this returns immediately whether or not the change is
 ---still running; callers must loop until `change.ready` is `true`.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param change_id string
 ---@param verbose? boolean
 ---@return workshop.api.Change
@@ -311,7 +269,7 @@ M.get_change = function(client, change_id, verbose)
 end
 
 ---Wait for a change to finish and return it.
----@param client workshop.api.HttpClient
+---@param client HttpClient
 ---@param change_id string
 ---@return workshop.api.Change
 M.wait_change = function(client, change_id)
