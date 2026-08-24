@@ -167,10 +167,11 @@ M.request = function(request, curl_opts)
 
     if result.code ~= 0 then
         local message = string.format(
-            "%s %s - curl error exit_code=%s stderr=%s",
+            "%s %s - curl error exit_code=%s stdout=%s stderr=%s",
             request.method,
             request.url,
             result.code,
+            result.stdout
             result.stderr
         )
         error(message)

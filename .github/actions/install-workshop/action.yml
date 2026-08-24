@@ -12,6 +12,12 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Install LXD snap
+      shell: bash
+      run: |
+        sudo snap install lxd --channel=6/stable
+        sudo snap start lxd
+
     - name: Install Workshop snap
       shell: bash
       run: |
