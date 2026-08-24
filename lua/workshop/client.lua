@@ -62,11 +62,12 @@ WorkshopClient.__index = WorkshopClient
 ---@field socket? string
 
 ---Create a new workshop client, and attempt to connect to a socket.
----@param opts WorkshopClientOpts
+---@param opts? WorkshopClientOpts
 ---@return WorkshopClient
 function WorkshopClient.new(opts)
     local client = setmetatable({}, WorkshopClient)
 
+    opts = opts or {}
     opts.socket = opts.socket or find_socket_path()
     if opts.socket == nil then
         error("cannot create client, socket not provided")

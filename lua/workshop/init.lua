@@ -1,6 +1,5 @@
 local Project = require("workshop.project")
 local WorkshopClient = require("workshop.client")
-local api = require("workshop.api")
 local ui = require("workshop.util.ui")
 
 local M = {}

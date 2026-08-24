@@ -100,6 +100,7 @@ local process_response = function(response)
         or response.status < 200
         or response.status >= 300
     then
+        vim.print(response)
         error("invalid API response")
     end
 
