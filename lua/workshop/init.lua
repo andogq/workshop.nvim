@@ -83,41 +83,4 @@ M.workshops = function()
     ui.float(lines)
 end
 
----Start a workshop within this project.
----@param name? string
-M.start_workshop = function(name)
-    local workshop_client = M.get_client()
-    local root = vim.fs.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
-    local project = Project.ensure(workshop_client, root)
-
-    local workshops = api.list_workshops(workshop_client, project.id).workshops
-
-    ---@param workshop workshop.api.WorkshopInfo
-    local start_workshop = function(workshop)
-        vim.print("starting workshop", workshop)
-    end
-    if workshops == nil or #workshops == 0 then
-        -- No workshops.
-        return
-    elseif #workshops == 1 then
-        start_workshop(workshops[1])
-    elseif name then
-        -- Select `name` workshop
-        for _, workshop in ipairs(workshops) do
-            if workshop.name == name then
-                start_workshop(workshop)
-                break
-            end
-        end
-    else
-        vim.ui.select(workshops, {
-            format_item =
-                ---@param workshop workshop.api.WorkshopInfo
-                function(workshop)
-                    return string.format("%s (%s)", workshop.name, workshop.status)
-                end,
-        }, start_workshop)
-    end
-end
-
 return M
