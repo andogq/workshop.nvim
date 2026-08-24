@@ -9,7 +9,7 @@ M._registered_projects = {}
 ---Return the project ID for the current buffer.
 ---@param client WorkshopClient
 M.current_project = function(client)
-    local root = vim.fn.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
+    local root = vim.fs.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
 
     if M._registered_projects[root] then
         return M._registered_projects[root]

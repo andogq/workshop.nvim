@@ -160,6 +160,23 @@ describe("http", function()
         assert.is_same("text/plain", result.headers["content-type"])
     end)
 
+    it("parses LF-only line endings", function()
+        system_stub.returns({
+            wait = function()
+                return {
+                    code = 0,
+                    stdout = 'HTTP/1.1 200 OK\nContent-Type: application/json\n\n{"ok":true}',
+                    stderr = "",
+                }
+            end,
+        })
+
+        local result = http.request({ url = "http://example.com/hello" })
+        assert.is_same(200, result.status)
+        assert.is_same({ ok = true }, result.body)
+        assert.is_same("application/json", result.headers["content-type"])
+    end)
+
     it("get helper sets method and returns response table", function()
         system_stub.returns({
             wait = function()

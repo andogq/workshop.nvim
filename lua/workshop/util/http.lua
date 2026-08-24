@@ -16,13 +16,13 @@ local M = {}
 ---@param stdout string
 ---@return HttpResponse
 local parse_response = function(stdout)
-    local header_end = stdout:find("\r?\n\r?\n")
-    if not header_end then
+    local header_sep_start, header_sep_end = stdout:find("\r?\n\r?\n")
+    if not header_sep_start then
         return { status = 0, headers = {}, body = stdout }
     end
 
-    local header_block = stdout:sub(1, header_end - 1)
-    local body = stdout:sub(header_end + 4)
+    local header_block = stdout:sub(1, header_sep_start - 1)
+    local body = stdout:sub(header_sep_end + 1)
 
     local lines = {}
     for line in header_block:gmatch("[^\r\n]+") do
@@ -146,7 +146,7 @@ local build_command = function(request, curl_opts)
     -- Request URL is final thing.
     local full_url = build_full_url(request.url, request.query)
     if curl_opts.unix_socket and full_url:sub(1, 1) == "/" then
-        full_url = "http://" .. full_url
+        full_url = "http://workshop" .. full_url
     end
     table.insert(args, full_url)
 
