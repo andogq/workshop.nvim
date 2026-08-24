@@ -4,7 +4,16 @@
         "lua/?.lua",
         "lua/?/init.lua"
     ],
-    "diagnostics.globals": ["vim", "describe", "it", "before_each", "after_each", "setup", "teardown", "pending"],
+    "diagnostics.globals": [
+        "vim",
+        "describe",
+        "it",
+        "before_each",
+        "after_each",
+        "setup",
+        "teardown",
+        "pending"
+    ],
     "workspace.checkThirdParty": false,
     "telemetry.enable": false
 }

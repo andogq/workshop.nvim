@@ -1,8 +1,9 @@
-local curl = require("plenary.curl")
+local http = require("workshop.util.http")
 
 ---@param socket string
 ---@return workshop.api.HttpClient
 local create_http_client = function(socket)
+    ---@param key "get" | "post"
     local wrap = function(key)
         ---@param req workshop.api.HttpRequest
         ---@return workshop.api.HttpResponse
@@ -12,21 +13,10 @@ local create_http_client = function(socket)
                 req.url = "http://workshop" .. req.url
             end
 
-            -- Ensure body is JSON encoded, with correct headers.
-            if type(req.body) == "table" then
-                req.body = vim.fn.json_encode(req.body)
-                req.headers = vim.tbl_extend(
-                    "force",
-                    req.headers or {},
-                    { ["Content-Type"] = "application/json" }
-                )
-            end
-
-            -- Provide the socket path to curl.
-            req.raw = vim.list_extend(req.raw or {}, { "--unix-socket", socket })
-
             ---@type workshop.api.HttpResponse
-            return curl[key](req)
+            return http[key](req, {
+                unix_socket = socket,
+            })
         end
     end
 
