@@ -98,11 +98,31 @@ describe("http", function()
         }, system_stub.calls[1].vals[1])
     end)
 
-    it("uses unix socket", function()
-        http.request({ url = "http://example.com/hello" }, { unix_socket = "/var/run/docker.sock" })
-        local args = system_stub.calls[1].vals[1]
-        assert.is_true(vim.tbl_contains(args, "--unix-socket"))
-        assert.is_true(vim.tbl_contains(args, "/var/run/docker.sock"))
+    it("builds URL from list of path components", function()
+        http.request({ url = { "v1", "projects", 123 } })
+        assert.are.same(
+            { "curl", "-i", "-X", "GET", "/v1/projects/123" },
+            system_stub.calls[1].vals[1]
+        )
+    end)
+
+    it("URL encodes list path components", function()
+        http.request({ url = { "v1", "hello world", "a/b" } })
+        assert.are.same(
+            { "curl", "-i", "-X", "GET", "/v1/hello+world/a%2Fb" },
+            system_stub.calls[1].vals[1]
+        )
+    end)
+
+    it("builds URL from list with query parameters", function()
+        http.request({
+            url = { "v1", "projects", 123 },
+            query = { state = "available" },
+        })
+        assert.are.same(
+            { "curl", "-i", "-X", "GET", "/v1/projects/123?state=available" },
+            system_stub.calls[1].vals[1]
+        )
     end)
 
     it("returns status, headers, and decoded JSON body", function()

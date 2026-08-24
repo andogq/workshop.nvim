@@ -57,11 +57,11 @@ local parse_response = function(stdout)
     return { status = status, headers = headers, body = body }
 end
 
----@class RequestOpts
+---@class HttpRequest
 ---Request HTTP method.
 ---@field method? "GET" | "POST"
----Request URL.
----@field url string
+---Request URL. If a list is passed, each component will be URL escaped and separated with `/`.
+---@field url string | (string | integer)[]
 ---Request query, to be appended to the URL.
 ---@field query? table
 ---Request body, to be encoded as JSON.
@@ -90,7 +90,7 @@ local url_encode = function(str)
     return encoded
 end
 
----@param url string
+---@param url string | (string | integer)[]
 ---@param query table?
 ---@return string
 local build_full_url = function(url, query)
@@ -100,6 +100,14 @@ local build_full_url = function(url, query)
         table.insert(query_parts, string.format("%s=%s", url_encode(key), url_encode(value)))
     end
 
+    if type(url) == "table" then
+        local encoded = {}
+        for _, item in ipairs(url) do
+            table.insert(encoded, url_encode(item))
+        end
+        url = "/" .. vim.fn.join(encoded, "/")
+    end
+
     if #query_parts == 0 then
         return url
     end
@@ -107,10 +115,10 @@ local build_full_url = function(url, query)
     return string.format("%s?%s", url, vim.fn.join(query_parts, "&"))
 end
 
----@param opts RequestOpts
+---@param request HttpRequest
 ---@param curl_opts CurlOpts
 ---@return string[]
-local build_command = function(opts, curl_opts)
+local build_command = function(request, curl_opts)
     local args = { curl_opts.curl_path or "curl" }
     local headers = {}
 
@@ -118,11 +126,11 @@ local build_command = function(opts, curl_opts)
     vim.list_extend(args, { "-i" })
 
     -- Request method.
-    vim.list_extend(args, { "-X", opts.method or "GET" })
+    vim.list_extend(args, { "-X", request.method or "GET" })
 
     -- JSON body.
-    if opts.body then
-        vim.list_extend(args, { "--data-raw", vim.fn.json_encode(opts.body) })
+    if request.body then
+        vim.list_extend(args, { "--data-raw", vim.fn.json_encode(request.body) })
         headers["Content-Type"] = "application/json"
     end
 
@@ -136,19 +144,19 @@ local build_command = function(opts, curl_opts)
     end
 
     -- Request URL is final thing.
-    table.insert(args, build_full_url(opts.url, opts.query))
+    table.insert(args, build_full_url(request.url, request.query))
 
     return args
 end
 
----@param opts RequestOpts
+---@param request HttpRequest
 ---@param curl_opts CurlOpts?
 ---@return HttpResponse
-M.request = function(opts, curl_opts)
-    opts.method = opts.method or "GET"
+M.request = function(request, curl_opts)
+    request.method = request.method or "GET"
     curl_opts = curl_opts or {}
 
-    local command = build_command(opts, curl_opts)
+    local command = build_command(request, curl_opts)
 
     -- Execute command.
     local result = vim.system(command, { text = true }):wait(10000)
@@ -156,8 +164,8 @@ M.request = function(opts, curl_opts)
     if result.code ~= 0 then
         local message = string.format(
             "%s %s - curl error exit_code=%s stderr=%s",
-            opts.method,
-            opts.url,
+            request.method,
+            request.url,
             result.code,
             result.stderr
         )

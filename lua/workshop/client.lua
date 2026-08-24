@@ -1,19 +1,19 @@
 local http = require("workshop.util.http")
 
 ---@param socket string
----@return workshop.api.HttpClient
+---@return HttpClient
 local create_http_client = function(socket)
     ---@param key "get" | "post"
     local wrap = function(key)
-        ---@param req workshop.api.HttpRequest
-        ---@return workshop.api.HttpResponse
+        ---@param req HttpRequest
+        ---@return HttpResponse
         return function(req)
             -- Allow requests to relative URLs, since the host doesn't matter for Unix sockets.
             if req.url:sub(1, 1) == "/" then
                 req.url = "http://" .. req.url
             end
 
-            ---@type workshop.api.HttpResponse
+            ---@type HttpResponse
             return http[key](req, {
                 unix_socket = socket,
             })
@@ -26,7 +26,7 @@ local create_http_client = function(socket)
     }
 end
 
----@class WorkshopClient: workshop.api.HttpClient
+---@class WorkshopClient: HttpClient
 ---@field socket string
 local WorkshopClient = {}
 WorkshopClient.__index = WorkshopClient

@@ -92,23 +92,18 @@ local M = {}
 ---@param response HttpResponse
 ---@return table
 local process_response = function(response)
-    local body = vim.fn.json_decode(response.body)
+    local body = response.body
 
-    if body.type == "error" or response.status < 200 or response.status >= 300 then
+    if
+        type(body) ~= "table"
+        or body.type == "error"
+        or response.status < 200
+        or response.status >= 300
+    then
         error("invalid API response")
     end
 
     return body.result
-end
-
----@param value string
----@return string
-local encode_url_part = function(value)
-    return (
-        value:gsub("[^%w%-%.%_%~]", function(c)
-            return string.format("%%%02X", c:byte())
-        end)
-    )
 end
 
 ---Fetch the daemon version.
@@ -159,7 +154,8 @@ end
 ---@return workshop.api.WorkshopsResponse
 M.list_workshops = function(client, project_id)
     return process_response(client.get({
-        url = "/v1/projects/" .. encode_url_part(project_id) .. "/workshops?state=available",
+        url = { "v1", "projects", project_id, "workshops" },
+        query = { state = "available" },
     }))
 end
 
@@ -171,9 +167,7 @@ end
 ---@return workshop.api.WorkshopInfo
 M.get_workshop = function(client, project_id, name)
     return process_response(client.get({
-        url = "/v1/projects/" .. encode_url_part(project_id) .. "/workshops/" .. encode_url_part(
-            name
-        ),
+        url = { "v1", "projects", project_id, "workshops", name },
     }))
 end
 
@@ -183,14 +177,14 @@ end
 ---@return workshop.api.SdkFullInfo
 M.get_sdk_info = function(client, name)
     return process_response(client.get({
-        url = "/v1/sdks/" .. encode_url_part(name),
+        url = { "v1", "sdks", name },
     }))
 end
 
 ---Post to an async endpoint and return the id of the change to wait on plus
 ---the (endpoint-specific) result payload.
 ---@param client HttpClient
----@param url_path string
+---@param url_path string[]
 ---@param body? table
 ---@return { change: string, result: any }
 M.post_async = function(client, url_path, body)
@@ -238,8 +232,7 @@ M.workshop_action = function(client, project_id, names, action, options)
         body.options = opts
     end
 
-    local async =
-        M.post_async(client, "/v1/projects/" .. encode_url_part(project_id) .. "/workshops", body)
+    local async = M.post_async(client, { "v1", "projects", project_id, "workshops" }, body)
 
     local change = M.wait_change(client, async.change)
 
@@ -262,9 +255,9 @@ end
 ---@param verbose? boolean
 ---@return workshop.api.Change
 M.get_change = function(client, change_id, verbose)
-    local query = verbose and "?verbose=true" or ""
     return process_response(client.get({
-        url = "/v1/changes/" .. encode_url_part(change_id) .. query,
+        url = { "v1", "changes", change_id },
+        query = verbose and { verbose = true } or nil,
     }))
 end
 
@@ -274,7 +267,7 @@ end
 ---@return workshop.api.Change
 M.wait_change = function(client, change_id)
     return process_response(client.get({
-        url = "/v1/changes/" .. encode_url_part(change_id) .. "/wait",
+        url = { "v1", "changes", change_id, "wait" },
     }))
 end
 

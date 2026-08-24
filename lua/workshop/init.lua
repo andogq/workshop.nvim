@@ -1,6 +1,5 @@
 local W_socket = require("workshop.socket")
 local WorkshopClient = require("workshop.client")
-local api = require("workshop.api")
 
 local M = {}
 
@@ -55,8 +54,17 @@ M.setup = function(opts)
 
     -- Wrap vim.lsp.start
     vim.lsp.start = wrap_start(vim.lsp.start)
+end
 
-    -- Resolve the socket.
+---@type WorkshopClient
+local client = nil
+
+---Fetch the current client instance.
+M.get_client = function()
+    if client ~= nil then
+        return client
+    end
+
     local socket ---@type string
     local config_socket = M.config.socket
     if type(config_socket) == "function" then
@@ -65,12 +73,9 @@ M.setup = function(opts)
         socket = config_socket
     end
 
-    -- Create the client.
-    local client = WorkshopClient:new({
-        socket = socket,
-    })
+    client = WorkshopClient:new({ socket = socket })
 
-    vim.print(api.system_info(client))
+    return client
 end
 
 return M
