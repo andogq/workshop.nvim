@@ -1,6 +1,7 @@
-local W_project = require("workshop.project")
+local Project = require("workshop.project")
 local WorkshopClient = require("workshop.client")
 local api = require("workshop.api")
+local ui = require("workshop.util.ui")
 
 local M = {}
 
@@ -70,13 +71,26 @@ M.get_client = function()
     return client
 end
 
+M.workshops = function()
+    local workshop_client = M.get_client()
+    local root = vim.fs.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
+    local project = Project.ensure(workshop_client, root)
+
+    local lines = { "Workshops:" }
+    for _, workshop in vim.spairs(project:workshops()) do
+        table.insert(lines, string.format("- %s (%s)", workshop.name, workshop.status))
+    end
+    ui.float(lines)
+end
+
 ---Start a workshop within this project.
 ---@param name? string
 M.start_workshop = function(name)
     local workshop_client = M.get_client()
-    local project = W_project.current_project(workshop_client)
+    local root = vim.fs.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
+    local project = Project.ensure(workshop_client, root)
 
-    local workshops = api.list_workshops(workshop_client, project).workshops
+    local workshops = api.list_workshops(workshop_client, project.id).workshops
 
     ---@param workshop workshop.api.WorkshopInfo
     local start_workshop = function(workshop)

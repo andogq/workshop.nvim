@@ -1,23 +1,63 @@
+local Workshop = require("workshop.workshop")
 local api = require("workshop.api")
 
-local M = {}
+---@class Project
+---Client used for this project.
+---@field client WorkshopClient
+---Daemon ID of the project.
+---@field id string
+local Project = {}
+Project.__index = Project
 
 ---Project paths mapped to a project ID.
----@type table<string, string>
-M._registered_projects = {}
+---@type table<string, Project>
+Project._registered_projects = {}
 
----Return the project ID for the current buffer.
 ---@param client WorkshopClient
-M.current_project = function(client)
-    local root = vim.fs.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
-
-    if M._registered_projects[root] then
-        return M._registered_projects[root]
-    end
-
-    M._registered_projects[root] = api.ensure_project(client, root).id
-
-    return M._registered_projects[root]
+---@param id string
+---@return Project
+Project.new = function(client, id)
+    local project = setmetatable({}, Project)
+    project.client = client
+    project.id = id
+    return project
 end
 
-return M
+---Produce the `Project` for a given root directory.
+---@param client WorkshopClient
+---@param root string
+---@returns Project
+Project.ensure = function(client, root)
+    if Project._registered_projects[root] then
+        return Project._registered_projects[root]
+    end
+
+    local project = api.ensure_project(client, root)
+    Project._registered_projects[root] = Project.new(client, project.id)
+
+    return Project._registered_projects[root]
+end
+
+---List workshops available in this project.
+---@return Workshop[]
+function Project:workshops()
+    local api_workshops = api.list_workshops(self.client, self.id)
+
+    local workshops = {}
+
+    -- Pre-fill files, so they can be later overridden.
+    for _, file in ipairs(api_workshops.files) do
+        local workshop = Workshop.from_file(self.client, file)
+        workshops[workshop.name] = workshop
+    end
+
+    -- Fill running workshops, overridding any file definitions.
+    for _, info in ipairs(api_workshops.workshops) do
+        local workshop = Workshop.from_info(self.client, info)
+        workshops[workshop.name] = workshop
+    end
+
+    return workshops
+end
+
+return Project

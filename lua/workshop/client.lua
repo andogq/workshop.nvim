@@ -73,7 +73,7 @@ function WorkshopClient.new(opts)
     end
 
     -- Assign fields from the http client
-    local http_client = create_http_client(client.socket)
+    local http_client = create_http_client(opts.socket)
     client = vim.tbl_extend("error", client, http_client)
 
     return client
