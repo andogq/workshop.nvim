@@ -8,11 +8,6 @@ local create_http_client = function(socket)
         ---@param req HttpRequest
         ---@return HttpResponse
         return function(req)
-            -- Allow requests to relative URLs, since the host doesn't matter for Unix sockets.
-            if req.url:sub(1, 1) == "/" then
-                req.url = "http://" .. req.url
-            end
-
             ---@type HttpResponse
             return http[key](req, {
                 unix_socket = socket,

@@ -144,7 +144,11 @@ local build_command = function(request, curl_opts)
     end
 
     -- Request URL is final thing.
-    table.insert(args, build_full_url(request.url, request.query))
+    local full_url = build_full_url(request.url, request.query)
+    if curl_opts.unix_socket and full_url:sub(1, 1) == "/" then
+        full_url = "http://" .. full_url
+    end
+    table.insert(args, full_url)
 
     return args
 end

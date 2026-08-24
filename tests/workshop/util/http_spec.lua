@@ -22,7 +22,7 @@ describe("http", function()
 
     it("defaults to get request", function()
         http.request({ url = "http://example.com/hello" })
-        assert.are.same(
+        assert.is_same(
             { "curl", "-i", "-X", "GET", "http://example.com/hello" },
             system_stub.calls[1].vals[1]
         )
@@ -31,7 +31,7 @@ describe("http", function()
     for _, method in ipairs({ "GET", "POST" }) do
         it(string.format("handles method: %s", method), function()
             http.request({ url = "http://example.com/hello", method = method })
-            assert.are.same(
+            assert.is_same(
                 { "curl", "-i", "-X", method, "http://example.com/hello" },
                 system_stub.calls[1].vals[1]
             )
@@ -48,7 +48,7 @@ describe("http", function()
                 param_escaped = "abc\n=%",
             },
         })
-        assert.are.same({
+        assert.is_same({
             "curl",
             "-i",
             "-X",
@@ -59,7 +59,7 @@ describe("http", function()
 
     it("omits query string when query is empty", function()
         http.request({ url = "http://example.com/hello", query = {} })
-        assert.are.same({
+        assert.is_same({
             "curl",
             "-i",
             "-X",
@@ -74,7 +74,7 @@ describe("http", function()
             url = "http://example.com/hello",
             body = { key = "value", count = 42 },
         })
-        assert.are.same({
+        assert.is_same({
             "curl",
             "-i",
             "-X",
@@ -89,7 +89,7 @@ describe("http", function()
 
     it("uses custom curl path", function()
         http.request({ url = "http://example.com/hello" }, { curl_path = "/opt/bin/curl" })
-        assert.are.same({
+        assert.is_same({
             "/opt/bin/curl",
             "-i",
             "-X",
@@ -100,7 +100,7 @@ describe("http", function()
 
     it("builds URL from list of path components", function()
         http.request({ url = { "v1", "projects", 123 } })
-        assert.are.same(
+        assert.is_same(
             { "curl", "-i", "-X", "GET", "/v1/projects/123" },
             system_stub.calls[1].vals[1]
         )
@@ -108,7 +108,7 @@ describe("http", function()
 
     it("URL encodes list path components", function()
         http.request({ url = { "v1", "hello world", "a/b" } })
-        assert.are.same(
+        assert.is_same(
             { "curl", "-i", "-X", "GET", "/v1/hello+world/a%2Fb" },
             system_stub.calls[1].vals[1]
         )
@@ -119,7 +119,7 @@ describe("http", function()
             url = { "v1", "projects", 123 },
             query = { state = "available" },
         })
-        assert.are.same(
+        assert.is_same(
             { "curl", "-i", "-X", "GET", "/v1/projects/123?state=available" },
             system_stub.calls[1].vals[1]
         )
@@ -137,10 +137,10 @@ describe("http", function()
         })
 
         local result = http.request({ url = "http://example.com/hello" })
-        assert.are.same(201, result.status)
-        assert.are.same({ ok = true }, result.body)
-        assert.are.same("application/json", result.headers["content-type"])
-        assert.are.same("abc-123", result.headers["x-request-id"])
+        assert.is_same(201, result.status)
+        assert.is_same({ ok = true }, result.body)
+        assert.is_same("application/json", result.headers["content-type"])
+        assert.is_same("abc-123", result.headers["x-request-id"])
     end)
 
     it("returns raw body when response is not JSON", function()
@@ -155,9 +155,9 @@ describe("http", function()
         })
 
         local result = http.request({ url = "http://example.com/hello" })
-        assert.are.same(200, result.status)
-        assert.are.same("hello world", result.body)
-        assert.are.same("text/plain", result.headers["content-type"])
+        assert.is_same(200, result.status)
+        assert.is_same("hello world", result.body)
+        assert.is_same("text/plain", result.headers["content-type"])
     end)
 
     it("get helper sets method and returns response table", function()
@@ -172,9 +172,9 @@ describe("http", function()
         })
 
         local result = http.get({ url = "http://example.com/hello" })
-        assert.are.same({ method = "GET" }, result.body)
-        assert.are.same(200, result.status)
-        assert.are.same({
+        assert.is_same({ method = "GET" }, result.body)
+        assert.is_same(200, result.status)
+        assert.is_same({
             "curl",
             "-i",
             "-X",
@@ -195,9 +195,9 @@ describe("http", function()
         })
 
         local result = http.post({ url = "http://example.com/hello" })
-        assert.are.same({ method = "POST" }, result.body)
-        assert.are.same(200, result.status)
-        assert.are.same({
+        assert.is_same({ method = "POST" }, result.body)
+        assert.is_same(200, result.status)
+        assert.is_same({
             "curl",
             "-i",
             "-X",
