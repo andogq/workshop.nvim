@@ -1,0 +1,9 @@
+name: dev
+base: ubuntu@24.04
+sdks:
+  - name: neovim
+    channel: 0.12/stable
+  - name: project-nvim-config
+actions:
+  test: |
+    nvim --headless -c 'lua require("plenary.test_harness").test_directory("tests", { minimal_init = "tests/minimal_init.lua" })'

@@ -1,0 +1,2 @@
+mkdir -p /home/workshop/.config/nvim
+ln -s /project/tests/minimal_init.lua /home/workshop/.config/nvim/init.lua

@@ -171,7 +171,7 @@ M.request = function(request, curl_opts)
             request.method,
             request.url,
             result.code,
-            result.stdout
+            result.stdout,
             result.stderr
         )
         error(message)
