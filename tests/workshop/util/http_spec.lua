@@ -1,5 +1,6 @@
 local http = require("workshop.util.http")
 
+local assert = require("luassert")
 local stub = require("luassert.stub")
 
 describe("http", function()

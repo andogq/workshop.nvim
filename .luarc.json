@@ -15,5 +15,9 @@
         "pending"
     ],
     "workspace.checkThirdParty": false,
+    "workspace.ignoreDir": [
+        ".tests",
+        ".git"
+    ],
     "telemetry.enable": false
 }

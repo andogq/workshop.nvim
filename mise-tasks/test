@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Run the test suite inside the dev workshop"
+
+set -euo pipefail
+
+status=$(workshop info dev 2>/dev/null | awk '/^status:/{print tolower($2)}' || true)
+
+case "$status" in
+    ready | waiting)
+        ;;
+    "")
+        workshop launch dev
+        ;;
+    *)
+        workshop start dev
+        ;;
+esac
+
+workshop run dev -- test

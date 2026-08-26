@@ -1,3 +1,5 @@
+local assert = require("luassert")
+
 describe("workshop.api", function()
     it("loads without errors", function()
         local api = require("workshop.api")
