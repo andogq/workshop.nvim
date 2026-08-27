@@ -1,6 +1,7 @@
 local api = require("workshop.api")
+local cli = require("workshop.cli")
 
----@alias Status "On" | "Off" | "Pending" | "Waiting" | "Error" | "Unknown"
+---@alias Status "Ready" | "Stopped" | "Pending" | "Waiting" | "Error" | "Unknown"
 
 ---@class Workshop
 ---Client used for this workshop.
@@ -10,7 +11,7 @@ local api = require("workshop.api")
 ---Project ID this workshop belongs to.
 ---@field project string
 ---Definition file.
----@field path string
+---@field path? string
 ---Whether this workshop has been launched.
 ---@field launched boolean
 ---Container status.
@@ -22,7 +23,7 @@ Workshop.__index = Workshop
 
 ---@param client WorkshopClient
 ---@param name string
----@param path string
+---@param path? string
 ---@param launched boolean
 ---@param status Status
 ---@param hostname? string
@@ -40,12 +41,13 @@ end
 
 ---@param client WorkshopClient
 ---@param info workshop.api.WorkshopInfo
-Workshop.from_info = function(client, info)
+---@param path? string Optional definition path.
+Workshop.from_info = function(client, info, path)
     return Workshop.new(
         client,
         info.name,
         info["project-id"],
-        info.path,
+        info.path or path,
         true,
         info.status,
         info.hostname
@@ -66,9 +68,10 @@ end
 
 ---Start (optionally launching or restarting) the workshop. Returns `true` if the start is
 ---successful, `false` otherwise (including if launching/restarting) isn't allowed.
----@param opts StartOpts
+---@param opts? StartOpts
 ---@returns boolean
 function Workshop:start(opts)
+    opts = opts or {}
     if not self.launched then
         if opts.allow_launch then
             self:lifecycle_action("launch")
@@ -78,10 +81,10 @@ function Workshop:start(opts)
         return false
     end
 
-    if self.status == "Off" or self.status == "Unknown" then
+    if self.status == "Stopped" or self.status == "Unknown" then
         self:lifecycle_action("start")
         return true
-    elseif self.status == "On" and opts.allow_restart then
+    elseif self.status == "Ready" and opts.allow_restart then
         self:lifecycle_action("stop")
         self:lifecycle_action("start")
         return true
@@ -112,6 +115,14 @@ function Workshop:fetch()
     for k, v in pairs(updated) do
         self[k] = v
     end
+end
+
+---Build an `exec` command to run within this workshop.
+---@param command string[]
+---@param opts? ExecOpts
+---@return string[]
+function Workshop:build_exec_command(command, opts)
+    return cli.build_exec_command(self.path, self.name, command, opts)
 end
 
 return Workshop

@@ -22,17 +22,19 @@ local wrap_start = function(start)
         M.wrapped_start = function(config, opts)
             -- Update the cmd.
             if type(config.cmd) == "table" then
-                config.cmd = vim.list_extend({
-                    "workshop",
-                    "exec",
-                    "--",
-                }, config.cmd --[[@as string[] ]])
-            end
-            vim.notify(vim.inspect(config.cmd))
+                local client = M.get_client()
+                local root = vim.fs.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
+                local project = Project.ensure(client, root)
+                local workshops = project:workshops()
 
-            -- HACK: Hardcoded.
-            config.root_dir = "/project"
-            config.cmd_env = {}
+                -- Just select the first workshop.
+                local keys = vim.tbl_keys(workshops)
+                if #keys >= 1 then
+                    local workshop = workshops[keys[1]]
+                    workshop:start({ allow_launch = true })
+                    config.cmd = workshop:build_exec_command(config.cmd --[[@as string[] ]])
+                end
+            end
 
             return start(config, opts)
         end

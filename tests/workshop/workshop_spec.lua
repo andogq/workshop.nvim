@@ -9,14 +9,14 @@ describe("workshop.workshop", function()
     describe(".new", function()
         it("stores the provided fields on the workshop", function()
             local workshop =
-                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "On", "a.wp")
+                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Ready", "a.wp")
 
             assert.same(client, workshop.client)
             assert.equals("ws-a", workshop.name)
             assert.equals("proj-1", workshop.project)
             assert.equals("/root/a.yaml", workshop.path)
             assert.is_true(workshop.launched)
-            assert.equals("On", workshop.status)
+            assert.equals("Ready", workshop.status)
             assert.equals("a.wp", workshop.hostname)
         end)
 
@@ -34,7 +34,7 @@ describe("workshop.workshop", function()
                 ["project-id"] = "proj-1",
                 name = "ws-a",
                 path = "/root/a.yaml",
-                status = "On",
+                status = "Ready",
                 hostname = "a.wp",
             })
 
@@ -43,7 +43,7 @@ describe("workshop.workshop", function()
             assert.equals("proj-1", workshop.project)
             assert.equals("/root/a.yaml", workshop.path)
             assert.is_true(workshop.launched)
-            assert.equals("On", workshop.status)
+            assert.equals("Ready", workshop.status)
             assert.equals("a.wp", workshop.hostname)
         end)
 
@@ -52,14 +52,44 @@ describe("workshop.workshop", function()
                 ["project-id"] = "proj-2",
                 name = "ws-b",
                 path = "/root/b.yaml",
-                status = "Off",
+                status = "Stopped",
             })
 
             assert.equals("ws-b", workshop.name)
             assert.equals("proj-2", workshop.project)
             assert.is_true(workshop.launched)
-            assert.equals("Off", workshop.status)
+            assert.equals("Stopped", workshop.status)
             assert.is_nil(workshop.hostname)
+        end)
+        it("uses the provided path when info omits it", function()
+            local workshop = Workshop.from_info(client, {
+                ["project-id"] = "proj-2",
+                name = "ws-b",
+                status = "Stopped",
+            }, "/root/fallback.yaml")
+
+            assert.equals("/root/fallback.yaml", workshop.path)
+        end)
+
+        it("prefers info.path over the provided fallback path", function()
+            local workshop = Workshop.from_info(client, {
+                ["project-id"] = "proj-2",
+                name = "ws-b",
+                path = "/root/info.yaml",
+                status = "Stopped",
+            }, "/root/fallback.yaml")
+
+            assert.equals("/root/info.yaml", workshop.path)
+        end)
+
+        it("leaves path nil when neither info nor argument provides it", function()
+            local workshop = Workshop.from_info(client, {
+                ["project-id"] = "proj-2",
+                name = "ws-b",
+                status = "Stopped",
+            })
+
+            assert.is_nil(workshop.path)
         end)
     end)
 
@@ -120,8 +150,8 @@ describe("workshop.workshop", function()
             assert.spy(lifecycle_stub).was_not_called()
         end)
 
-        it("starts an off workshop", function()
-            workshop = Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Off", nil)
+        it("starts a stopped workshop", function()
+            workshop = Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Stopped", nil)
 
             local result = workshop:start({})
 
@@ -141,7 +171,7 @@ describe("workshop.workshop", function()
         end)
 
         it("restarts a running workshop when allow_restart is true", function()
-            workshop = Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "On", "a.wp")
+            workshop = Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Ready", "a.wp")
 
             local result = workshop:start({ allow_restart = true })
 
@@ -152,7 +182,7 @@ describe("workshop.workshop", function()
         end)
 
         it("returns false for a running workshop when allow_restart is false", function()
-            workshop = Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "On", "a.wp")
+            workshop = Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Ready", "a.wp")
 
             local result = workshop:start({})
 
@@ -174,7 +204,7 @@ describe("workshop.workshop", function()
 
         it("delegates to lifecycle_action with stop", function()
             local workshop =
-                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "On", "a.wp")
+                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Ready", "a.wp")
 
             workshop:stop()
 
@@ -204,7 +234,7 @@ describe("workshop.workshop", function()
             action_stub.returns({ id = "change-1" })
 
             local workshop =
-                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "On", "a.wp")
+                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Ready", "a.wp")
             workshop:lifecycle_action("stop")
 
             assert.spy(action_stub).was_called_with(client, "proj-1", { "ws-a" }, "stop")
@@ -229,15 +259,15 @@ describe("workshop.workshop", function()
                 ["project-id"] = "proj-1",
                 name = "ws-a",
                 path = "/root/a.yaml",
-                status = "Off",
+                status = "Stopped",
             })
 
             local workshop =
-                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "On", "a.wp")
+                Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", true, "Ready", "a.wp")
             workshop:fetch()
 
             assert.spy(get_stub).was_called_with(client, "proj-1", "ws-a")
-            assert.equals("Off", workshop.status)
+            assert.equals("Stopped", workshop.status)
             assert.equals("a.wp", workshop.hostname)
             assert.is_true(workshop.launched)
         end)
@@ -247,7 +277,7 @@ describe("workshop.workshop", function()
                 ["project-id"] = "proj-1",
                 name = "ws-a",
                 path = "/root/a.yaml",
-                status = "On",
+                status = "Ready",
                 hostname = "a.wp",
             })
 
@@ -255,7 +285,7 @@ describe("workshop.workshop", function()
                 Workshop.new(client, "ws-a", "proj-1", "/root/a.yaml", false, "Unknown", nil)
             workshop:fetch()
 
-            assert.equals("On", workshop.status)
+            assert.equals("Ready", workshop.status)
             assert.equals("a.wp", workshop.hostname)
             assert.is_true(workshop.launched)
         end)

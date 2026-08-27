@@ -106,7 +106,7 @@ describe("workshop.project", function()
                         ["project-id"] = "proj-1",
                         name = "running-a",
                         path = "/root/a.yaml",
-                        status = "On",
+                        status = "Ready",
                         hostname = "a.wp",
                     },
                 },
@@ -118,7 +118,7 @@ describe("workshop.project", function()
             assert.equals("running-a", workshops["running-a"].name)
             assert.equals("proj-1", workshops["running-a"].project)
             assert.is_true(workshops["running-a"].launched)
-            assert.equals("On", workshops["running-a"].status)
+            assert.equals("Ready", workshops["running-a"].status)
             assert.equals("a.wp", workshops["running-a"].hostname)
         end)
 
@@ -132,7 +132,7 @@ describe("workshop.project", function()
                         ["project-id"] = "proj-1",
                         name = "shared",
                         path = "/root/shared.yaml",
-                        status = "On",
+                        status = "Ready",
                     },
                 },
             })
@@ -141,30 +141,30 @@ describe("workshop.project", function()
 
             assert.is_not_nil(workshops["shared"])
             assert.is_true(workshops["shared"].launched)
-            assert.equals("On", workshops["shared"].status)
+            assert.equals("Ready", workshops["shared"].status)
         end)
 
         it("merges distinct file and running workshops", function()
             list_stub.returns({
                 files = {
-                    { ["project-id"] = "proj-1", name = "off", path = "/root/off.yaml" },
+                    { ["project-id"] = "proj-1", name = "file-only", path = "/root/file-only.yaml" },
                 },
                 workshops = {
                     {
                         ["project-id"] = "proj-1",
-                        name = "on",
-                        path = "/root/on.yaml",
-                        status = "On",
+                        name = "ready",
+                        path = "/root/ready.yaml",
+                        status = "Ready",
                     },
                 },
             })
 
             local workshops = project:workshops()
 
-            assert.is_not_nil(workshops["off"])
-            assert.is_false(workshops["off"].launched)
-            assert.is_not_nil(workshops["on"])
-            assert.is_true(workshops["on"].launched)
+            assert.is_not_nil(workshops["file-only"])
+            assert.is_false(workshops["file-only"].launched)
+            assert.is_not_nil(workshops["ready"])
+            assert.is_true(workshops["ready"].launched)
         end)
     end)
 end)

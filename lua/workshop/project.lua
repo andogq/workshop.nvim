@@ -53,7 +53,8 @@ function Project:workshops()
 
     -- Fill running workshops, overridding any file definitions.
     for _, info in ipairs(api_workshops.workshops) do
-        local workshop = Workshop.from_info(self.client, info)
+        local existing = workshops[info.name] or {}
+        local workshop = Workshop.from_info(self.client, info, existing.path)
         workshops[workshop.name] = workshop
     end
 

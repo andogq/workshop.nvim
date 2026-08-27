@@ -49,7 +49,7 @@ local M = {}
 ---@field path? string
 
 ---A workshop *definition file* on disk (`GET .../workshops` → `files`).
----These may exist without a running container — i.e. the workshop is `Off`.
+---These may exist without a running container — i.e. the workshop is not yet launched.
 ---@class workshop.api.WorkshopFile
 ---@field ['project-id'] string
 ---@field name string
@@ -100,7 +100,6 @@ local process_response = function(response)
         or response.status < 200
         or response.status >= 300
     then
-        vim.print(response)
         error("invalid API response")
     end
 
@@ -149,7 +148,7 @@ M.ensure_project = function(client, project_path)
 end
 
 ---List the workshops of a project: both launched instances (with a live status)
----and definition files on disk (which may be `Off`).
+---and definition files on disk (which may be not yet launched).
 ---@param client HttpClient
 ---@param project_id string
 ---@return workshop.api.WorkshopsResponse
