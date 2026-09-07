@@ -1,5 +1,5 @@
-local cli = require("workshop.cli")
 local assert = require("luassert")
+local cli = require("workshop.cli")
 
 describe("workshop.cli", function()
     describe("build_exec_command", function()
@@ -18,12 +18,7 @@ describe("workshop.cli", function()
         end)
 
         it("uses a custom working directory", function()
-            local command = cli.build_exec_command(
-                "/project",
-                "dev",
-                { "ls" },
-                { cwd = "/tmp" }
-            )
+            local command = cli.build_exec_command("/project", "dev", { "ls" }, { cwd = "/tmp" })
 
             assert.same({
                 "workshop",
@@ -76,11 +71,8 @@ describe("workshop.cli", function()
         end)
 
         it("handles a command with multiple arguments", function()
-            local command = cli.build_exec_command(
-                "/project",
-                "dev",
-                { "python", "-c", "print('hello')" }
-            )
+            local command =
+                cli.build_exec_command("/project", "dev", { "python", "-c", "print('hello')" })
 
             assert.same({
                 "workshop",

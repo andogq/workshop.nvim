@@ -147,7 +147,11 @@ describe("workshop.project", function()
         it("merges distinct file and running workshops", function()
             list_stub.returns({
                 files = {
-                    { ["project-id"] = "proj-1", name = "file-only", path = "/root/file-only.yaml" },
+                    {
+                        ["project-id"] = "proj-1",
+                        name = "file-only",
+                        path = "/root/file-only.yaml",
+                    },
                 },
                 workshops = {
                     {
