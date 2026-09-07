@@ -13,6 +13,7 @@ local M = {}
 ---Path to `workshop` socket, or a function that returns the path.
 ---@field socket string?
 ---@field path_mapping Workshop.PathMappingConfig
+---@field ignore_roots string[]
 M.config = {
     path_mapping = {
         clangd = function(project_root, cmd)
@@ -37,6 +38,7 @@ M.config = {
             return cmd
         end,
     },
+    ignore_roots = {},
 }
 
 ---@class workshop.Opts
@@ -44,11 +46,20 @@ M.config = {
 ---Path to `workshop` socket, or a function that returns the path.
 ---@field socket? string | fun():string
 ---@field path_mapping? Workshop.PathMappingConfig
+---Path of project roots to ignore.
+---@field ignore_roots? string[]
 
 ---@param opts? workshop.Opts
 M.setup = function(opts)
     opts = opts or {}
     M.config = vim.tbl_deep_extend("force", M.config, opts)
+
+    -- Post-process `ignore_roots` to canonicalise the paths.
+    for i, path in ipairs(M.config.ignore_roots) do
+        -- :p - Turn to a full path
+        -- :h - Removes the trailing `/`
+        M.config.ignore_roots[i] = vim.fn.fnamemodify(path, ":p:h")
+    end
 
     local client = M.get_client()
 

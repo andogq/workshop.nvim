@@ -41,19 +41,21 @@ end
 ---@return fun(dispatchers: vim.lsp.rpc.Dispatchers, config: vim.lsp.ClientConfig): vim.lsp.rpc.PublicClient
 local create_lsp_cmd = function(client, cmd)
     return function(dispatchers, config)
+        local plugin_config = require("workshop").config
+
         -- Copy the cmd so it can be modified.
         cmd = vim.list_extend({}, cmd --[[ @as string[] ]])
 
         -- Update the cmd.
         local root = vim.fs.root(0, { ".workshop" })
-        if root then
+        if root and not vim.list_contains(plugin_config.ignore_roots, root) then
             local project = Project.ensure(client, root)
             local workshops = project:workshops()
             local workshop = select_workshop(workshops)
             if workshop then
                 workshop:start({ allow_launch = true })
 
-                local mappings = require("workshop").config.path_mapping
+                local mappings = plugin_config.path_mapping
                 if mappings[config.name] then
                     cmd = mappings[config.name](root, cmd)
                 end
