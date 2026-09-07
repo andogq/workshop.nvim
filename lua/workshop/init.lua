@@ -1,62 +1,60 @@
 local Project = require("workshop.project")
 local WorkshopClient = require("workshop.client")
+local lsp = require("workshop.lsp")
 local ui = require("workshop.util.ui")
 
 local M = {}
+
+---A function for each LSP, which can modify the command to add options to enable path mapping.
+---@alias Workshop.PathMappingConfig table<string, fun(project_root: string, cmd: string[]):string[]>
 
 ---@class workshop.Config
 ---
 ---Path to `workshop` socket, or a function that returns the path.
 ---@field socket string?
-M.config = {}
+---@field path_mapping Workshop.PathMappingConfig
+M.config = {
+    path_mapping = {
+        clangd = function(project_root, cmd)
+            local mapping = project_root .. "=/project"
 
----@type StartFunction | nil
-M.wrapped_start = nil
+            local flag = "--path-mappings"
+            for i, value in ipairs(cmd) do
+                if value:sub(1, #flag) == flag then
+                    -- If the flag exactly matches, the following argument contains the mappings.
+                    if value == flag then
+                        i = i + 1
+                    end
 
----@alias StartFunction fun(config: vim.lsp.ClientConfig, opts?: vim.lsp.start.Opts): integer?
-
----@param start StartFunction
----@return StartFunction
-local wrap_start = function(start)
-    if not M.wrapped_start then
-        M.wrapped_start = function(config, opts)
-            -- Update the cmd.
-            if type(config.cmd) == "table" then
-                local client = M.get_client()
-                local root = vim.fs.root(0, { ".git", ".workshop" }) or vim.fn.getcwd(0)
-                local project = Project.ensure(client, root)
-                local workshops = project:workshops()
-
-                -- Just select the first workshop.
-                local keys = vim.tbl_keys(workshops)
-                if #keys >= 1 then
-                    local workshop = workshops[keys[1]]
-                    workshop:start({ allow_launch = true })
-                    config.cmd = workshop:build_exec_command(config.cmd --[[@as string[] ]])
+                    -- Append the mapping as a comma separated list.
+                    cmd[i] = cmd[i] .. "," .. mapping
                 end
             end
 
-            return start(config, opts)
-        end
-    end
+            -- Flag wasn't found, so just add it.
+            vim.list_extend(cmd, { flag .. "=" .. mapping })
 
-    return M.wrapped_start
-end
+            return cmd
+        end,
+    },
+}
 
 ---@class workshop.Opts
 ---
 ---Path to `workshop` socket, or a function that returns the path.
 ---@field socket? string | fun():string
----@field wrap_start? boolean
+---@field path_mapping? Workshop.PathMappingConfig
 
 ---@param opts? workshop.Opts
 M.setup = function(opts)
     opts = opts or {}
     M.config = vim.tbl_deep_extend("force", M.config, opts)
 
-    if opts.wrap_start then
-        -- Wrap vim.lsp.start
-        vim.lsp.start = wrap_start(vim.lsp.start)
+    local client = M.get_client()
+
+    if opts.wrap_start and not M.start_wrapped then
+        M.start_wrapped = true
+        vim.lsp.start = lsp.wrap_start(client, vim.lsp.start)
     end
 end
 
