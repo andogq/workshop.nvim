@@ -14,6 +14,7 @@ local M = {}
 ---@field socket string?
 ---@field path_mapping Workshop.PathMappingConfig
 ---@field ignore_roots string[]
+---@field ignore_lsps string[]
 M.config = {
     path_mapping = {
         clangd = function(project_root, cmd)
@@ -39,15 +40,20 @@ M.config = {
         end,
     },
     ignore_roots = {},
+    ignore_lsps = {},
 }
 
 ---@class workshop.Opts
 ---
 ---Path to `workshop` socket, or a function that returns the path.
 ---@field socket? string | fun():string
+---Wrap `vim.lsp.start` to run LSPs within the workshop.
+---@field wrap_start? boolean
 ---@field path_mapping? Workshop.PathMappingConfig
 ---Path of project roots to ignore.
 ---@field ignore_roots? string[]
+---LSP names to ignore.
+---@field ignore_lsps? string[]
 
 ---@param opts? workshop.Opts
 M.setup = function(opts)

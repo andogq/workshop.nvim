@@ -48,7 +48,11 @@ local create_lsp_cmd = function(client, cmd)
 
         -- Update the cmd.
         local root = vim.fs.root(0, { ".workshop" })
-        if root and not vim.list_contains(plugin_config.ignore_roots, root) then
+        if
+            root
+            and not vim.list_contains(plugin_config.ignore_roots, root)
+            and not vim.list_contains(plugin_config.ignore_lsps, config.name)
+        then
             local project = Project.ensure(client, root)
             local workshops = project:workshops()
             local workshop = select_workshop(workshops)
